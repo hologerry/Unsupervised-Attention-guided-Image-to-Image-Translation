@@ -1,7 +1,6 @@
 """Code for constructing the model and get the outputs from the model."""
 
 import tensorflow as tf
-import numpy as np
 import layers
 
 # The number of samples per batch.
@@ -45,18 +44,26 @@ def get_outputs(inputs, skip=False):
         mask_a_on_a = tf.multiply(images_a, mask_a)
         mask_b_on_b = tf.multiply(images_b, mask_b)
 
-        prob_real_a_is_real = current_discriminator(images_a, mask_a, transition_rate, donorm, "d_A")
-        prob_real_b_is_real = current_discriminator(images_b, mask_b, transition_rate, donorm, "d_B")
+        prob_real_a_is_real = current_discriminator(
+            images_a, mask_a, transition_rate, donorm, "d_A")
+        prob_real_b_is_real = current_discriminator(
+            images_b, mask_b, transition_rate, donorm, "d_B")
 
-        fake_images_b_from_g = current_generator(images_a, name="g_A", skip=skip)
-        fake_images_b = tf.multiply(fake_images_b_from_g, mask_a) + tf.multiply(images_a, 1-mask_a)
+        fake_images_b_from_g = current_generator(
+            images_a, name="g_A", skip=skip)
+        fake_images_b = tf.multiply(
+            fake_images_b_from_g, mask_a) + tf.multiply(images_a, 1-mask_a)
 
-        fake_images_a_from_g = current_generator(images_b, name="g_B", skip=skip)
-        fake_images_a = tf.multiply(fake_images_a_from_g, mask_b) + tf.multiply(images_b, 1-mask_b)
+        fake_images_a_from_g = current_generator(
+            images_b, name="g_B", skip=skip)
+        fake_images_a = tf.multiply(
+            fake_images_a_from_g, mask_b) + tf.multiply(images_b, 1-mask_b)
         scope.reuse_variables()
 
-        prob_fake_a_is_real = current_discriminator(fake_images_a, mask_b, transition_rate, donorm, "d_A")
-        prob_fake_b_is_real = current_discriminator(fake_images_b, mask_a, transition_rate, donorm, "d_B")
+        prob_fake_a_is_real = current_discriminator(
+            fake_images_a, mask_b, transition_rate, donorm, "d_A")
+        prob_fake_b_is_real = current_discriminator(
+            fake_images_b, mask_a, transition_rate, donorm, "d_B")
 
         mask_acycle = current_autoenc(fake_images_a, "g_A_ae")
         mask_bcycle = current_autoenc(fake_images_b, "g_B_ae")
@@ -66,8 +73,10 @@ def get_outputs(inputs, skip=False):
         mask_acycle_on_fakeA = tf.multiply(fake_images_a, mask_acycle)
         mask_bcycle_on_fakeB = tf.multiply(fake_images_b, mask_bcycle)
 
-        cycle_images_a_from_g = current_generator(fake_images_b, name="g_B", skip=skip)
-        cycle_images_b_from_g = current_generator(fake_images_a, name="g_A", skip=skip)
+        cycle_images_a_from_g = current_generator(
+            fake_images_b, name="g_B", skip=skip)
+        cycle_images_b_from_g = current_generator(
+            fake_images_a, name="g_A", skip=skip)
 
         cycle_images_a = tf.multiply(cycle_images_a_from_g,
                                      mask_bcycle) + tf.multiply(fake_images_b, 1 - mask_bcycle)
@@ -77,8 +86,10 @@ def get_outputs(inputs, skip=False):
 
         scope.reuse_variables()
 
-        prob_fake_pool_a_is_real = current_discriminator(fake_pool_a, fake_pool_a_mask, transition_rate, donorm, "d_A")
-        prob_fake_pool_b_is_real = current_discriminator(fake_pool_b, fake_pool_b_mask, transition_rate, donorm, "d_B")
+        prob_fake_pool_a_is_real = current_discriminator(
+            fake_pool_a, fake_pool_a_mask, transition_rate, donorm, "d_A")
+        prob_fake_pool_b_is_real = current_discriminator(
+            fake_pool_b, fake_pool_b_mask, transition_rate, donorm, "d_B")
 
     return {
         'prob_real_a_is_real': prob_real_a_is_real,
@@ -93,9 +104,10 @@ def get_outputs(inputs, skip=False):
         'fake_images_b': fake_images_b,
         'masked_ims': [mask_a_on_a, mask_b_on_b, mask_acycle_on_fakeA, mask_bcycle_on_fakeB],
         'masks': [mask_a, mask_b, mask_acycle, mask_bcycle],
-        'masked_gen_ims' : [fake_images_b_from_g, fake_images_a_from_g , cycle_images_a_from_g, cycle_images_b_from_g],
-        'mask_tmp' : mask_a,
+        'masked_gen_ims': [fake_images_b_from_g, fake_images_a_from_g, cycle_images_a_from_g, cycle_images_b_from_g],
+        'mask_tmp': mask_a,
     }
+
 
 def autoenc_upsample(inputae, name):
 
@@ -115,21 +127,24 @@ def autoenc_upsample(inputae, name):
 
         size_d1 = o_r1.get_shape().as_list()
         o_c4 = layers.upsamplingDeconv(o_r1, size=[size_d1[1] * 2, size_d1[2] * 2], is_scale=False, method=1,
-                                   align_corners=False,name= 'up1')
+                                       align_corners=False, name='up1')
         # o_c4_pad = tf.pad(o_c4, [[0, 0], [1, 1], [1, 1], [0, 0]], "REFLECT", name='padup1')
-        o_c4_end = layers.general_conv2d(o_c4, tf.constant(True, dtype=bool), ngf * 2, (3, 3), (1, 1), padding='VALID', name='c4')
+        o_c4_end = layers.general_conv2d(o_c4, tf.constant(
+            True, dtype=bool), ngf * 2, (3, 3), (1, 1), padding='VALID', name='c4')
 
         size_d2 = o_c4_end.get_shape().as_list()
         o_c5 = layers.upsamplingDeconv(o_c4_end, size=[size_d2[1] * 2, size_d2[2] * 2], is_scale=False, method=1,
                                        align_corners=False, name='up2')
         # o_c5_pad = tf.pad(o_c5, [[0, 0], [1, 1], [1, 1], [0, 0]], "REFLECT", name='padup2')
-        oc5_end = layers.general_conv2d(o_c5, tf.constant(True, dtype=bool), ngf , (3, 3), (1, 1), padding='VALID', name='c5')
+        oc5_end = layers.general_conv2d(o_c5, tf.constant(
+            True, dtype=bool), ngf, (3, 3), (1, 1), padding='VALID', name='c5')
 
         # o_c6 = tf.pad(oc5_end, [[0, 0], [3, 3], [3, 3], [0, 0]], "REFLECT", name='padup3')
         o_c6_end = layers.general_conv2d(oc5_end, tf.constant(False, dtype=bool),
-                                         1 , (f, f), (1, 1), padding='VALID', name='c6', do_relu=False)
+                                         1, (f, f), (1, 1), padding='VALID', name='c6', do_relu=False)
 
-        return tf.nn.sigmoid(o_c6_end,'sigmoid')
+        return tf.nn.sigmoid(o_c6_end, 'sigmoid')
+
 
 def build_resnet_block(inputres, dim, name="resnet", padding="REFLECT"):
     """build a single block of resnet.
@@ -152,6 +167,7 @@ def build_resnet_block(inputres, dim, name="resnet", padding="REFLECT"):
 
         return tf.nn.relu(out_res + inputres)
 
+
 def build_resnet_block_Att(inputres, dim, name="resnet", padding="REFLECT"):
     """build a single block of resnet.
 
@@ -173,6 +189,7 @@ def build_resnet_block_Att(inputres, dim, name="resnet", padding="REFLECT"):
 
         return tf.nn.relu(out_res + inputres)
 
+
 def build_generator_resnet_9blocks(inputgen, name="generator", skip=False):
 
     with tf.variable_scope(name):
@@ -186,11 +203,10 @@ def build_generator_resnet_9blocks(inputgen, name="generator", skip=False):
             inputgen, tf.constant(True, dtype=bool), ngf, f, f, 1, 1, 0.02, name="c1")
 
         o_c2 = layers.general_conv2d(
-            o_c1, tf.constant(True, dtype=bool),ngf * 2, ks, ks, 2, 2, 0.02, padding='same', name="c2")
+            o_c1, tf.constant(True, dtype=bool), ngf * 2, ks, ks, 2, 2, 0.02, padding='same', name="c2")
 
         o_c3 = layers.general_conv2d(
             o_c2, tf.constant(True, dtype=bool), ngf * 4, ks, ks, 2, 2, 0.02, padding='same', name="c3")
-
 
         o_r1 = build_resnet_block(o_c3, ngf * 4, "r1", padding)
         o_r2 = build_resnet_block(o_r1, ngf * 4, "r2", padding)
@@ -219,6 +235,7 @@ def build_generator_resnet_9blocks(inputgen, name="generator", skip=False):
             out_gen = tf.nn.tanh(o_c6, "t1")
 
         return out_gen
+
 
 def discriminator(inputdisc,  mask, transition_rate, donorm,  name="discriminator"):
 
@@ -257,6 +274,5 @@ def discriminator(inputdisc,  mask, transition_rate, donorm,  name="discriminato
 
         o_c5 = layers.general_conv2d(
             pad_o_c4, tf.constant(False, dtype=bool), 1, f, f, 1, 1, 0.02, "VALID", "c5", do_relu=False)
-
 
         return o_c5

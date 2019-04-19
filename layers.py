@@ -29,14 +29,15 @@ def instance_norm(x):
 
         return out
 
-def instance_norm_bis(x,mask):
+
+def instance_norm_bis(x, mask):
 
     with tf.variable_scope("instance_norm"):
         epsilon = 1e-5
         for i in range(x.shape[-1]):
             slice = tf.gather(x, i, axis=3)
             slice_mask = tf.gather(mask, i, axis=3)
-            tmp = tf.boolean_mask(slice,slice_mask)
+            _ = tf.boolean_mask(slice, slice_mask)
             mean, var = tf.nn.moments_bis(x, [1, 2], keep_dims=False)
 
         mean, var = tf.nn.moments_bis(x, [1, 2], keep_dims=True)
@@ -54,8 +55,8 @@ def instance_norm_bis(x,mask):
 
 
 def general_conv2d_(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02,
-                   padding="VALID", name="conv2d", do_norm=True, do_relu=True,
-                   relufactor=0):
+                    padding="VALID", name="conv2d", do_norm=True, do_relu=True,
+                    relufactor=0):
     with tf.variable_scope(name):
 
         conv = tf.contrib.layers.conv2d(
@@ -77,6 +78,7 @@ def general_conv2d_(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02,
 
         return conv
 
+
 def general_conv2d(inputconv, do_norm, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02,
                    padding="VALID", name="conv2d", do_relu=True,
                    relufactor=0):
@@ -92,15 +94,14 @@ def general_conv2d(inputconv, do_norm, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stdde
 
         conv = tf.cond(do_norm, lambda: instance_norm(conv), lambda: conv)
 
-
         if do_relu:
             if(relufactor == 0):
                 conv = tf.nn.relu(conv, "relu")
             else:
                 conv = lrelu(conv, relufactor, "lrelu")
 
-
         return conv
+
 
 def general_deconv2d(inputconv, outshape, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1,
                      stddev=0.02, padding="VALID", name="deconv2d",
@@ -126,7 +127,8 @@ def general_deconv2d(inputconv, outshape, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1,
 
         return conv
 
-def upsamplingDeconv(inputconv, size, is_scale, method,align_corners, name):
+
+def upsamplingDeconv(inputconv, size, is_scale, method, align_corners, name):
     if len(inputconv.get_shape()) == 3:
         if is_scale:
             size_h = size[0] * int(inputconv.get_shape()[0])
@@ -141,22 +143,24 @@ def upsamplingDeconv(inputconv, size, is_scale, method,align_corners, name):
         raise Exception("Donot support shape %s" % inputconv.get_shape())
     print("  [TL] UpSampling2dLayer %s: is_scale:%s size:%s method:%d align_corners:%s" %
           (name, is_scale, size, method, align_corners))
-    with tf.variable_scope(name) as vs:
+    with tf.variable_scope(name):
         try:
-            out = tf.image.resize_images(inputconv, size=size, method=method, align_corners=align_corners)
-        except:  # for TF 0.10
+            out = tf.image.resize_images(
+                inputconv, size=size, method=method, align_corners=align_corners)
+        except Exception:  # for TF 0.10
             out = tf.image.resize_images(inputconv, new_height=size[0], new_width=size[1], method=method,
-                                                  align_corners=align_corners)
+                                         align_corners=align_corners)
     return out
+
 
 def general_fc_layers(inpfc, outshape, name):
     with tf.variable_scope(name):
 
         fcw = tf.Variable(tf.truncated_normal(outshape,
-                                               dtype=tf.float32,
-                                               stddev=1e-1), name='weights')
+                                              dtype=tf.float32,
+                                              stddev=1e-1), name='weights')
         fcb = tf.Variable(tf.constant(1.0, shape=[outshape[-1]], dtype=tf.float32),
-                           trainable=True, name='biases')
+                          trainable=True, name='biases')
 
         fcl = tf.nn.bias_add(tf.matmul(inpfc, fcw), fcb)
         fc_out = tf.nn.relu(fcl)

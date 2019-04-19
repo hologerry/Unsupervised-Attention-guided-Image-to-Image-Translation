@@ -30,7 +30,8 @@ def cycle_consistency_loss(real_images, generated_images):
 
 def mask_loss(gen_image, mask):
 
-    return tf.reduce_mean(tf.abs(tf.multiply(gen_image,1-mask)))
+    return tf.reduce_mean(tf.abs(tf.multiply(gen_image, 1-mask)))
+
 
 def lsgan_loss_generator(prob_fake_is_real):
     """Computes the LS-GAN loss as minimized by the generator.

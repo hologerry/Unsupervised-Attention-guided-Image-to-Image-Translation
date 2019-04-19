@@ -10,7 +10,9 @@ import argparse
 import tensorflow as tf
 
 import cyclegan_datasets
-import data_loader, losses, model
+import data_loader
+import losses
+import model
 
 tf.set_random_seed(1)
 np.random.seed(0)
@@ -154,7 +156,6 @@ class CycleGAN:
         *_summ -> Summary variables for above loss functions
         """
 
-
         cycle_consistency_loss_a = \
             self._lambda_a * losses.cycle_consistency_loss(
                 real_images=self.input_a, generated_images=self.cycle_images_a,
@@ -191,9 +192,10 @@ class CycleGAN:
         g_Ae_vars = [var for var in self.model_vars if 'g_A_ae' in var.name]
         g_Be_vars = [var for var in self.model_vars if 'g_B_ae' in var.name]
 
-
-        self.g_A_trainer = optimizer.minimize(g_loss_A, var_list=g_A_vars+g_Ae_vars)
-        self.g_B_trainer = optimizer.minimize(g_loss_B, var_list=g_B_vars+g_Be_vars)
+        self.g_A_trainer = optimizer.minimize(
+            g_loss_A, var_list=g_A_vars+g_Ae_vars)
+        self.g_B_trainer = optimizer.minimize(
+            g_loss_B, var_list=g_B_vars+g_Be_vars)
         self.g_A_trainer_bis = optimizer.minimize(g_loss_A, var_list=g_A_vars)
         self.g_B_trainer_bis = optimizer.minimize(g_loss_B, var_list=g_B_vars)
         self.d_A_trainer = optimizer.minimize(d_loss_A, var_list=d_A_vars)
@@ -220,7 +222,7 @@ class CycleGAN:
         if not os.path.exists(self._images_dir):
             os.makedirs(self._images_dir)
 
-        if curr_tr >0:
+        if curr_tr > 0:
             donorm = False
         else:
             donorm = True
@@ -260,7 +262,8 @@ class CycleGAN:
                     else:
 
                         imsave(os.path.join(self._images_dir, image_name),
-                               ((np.squeeze(tensor[0]) + 1) * 127.5).astype(np.uint8)
+                               ((np.squeeze(tensor[0]) + 1)
+                                * 127.5).astype(np.uint8)
                                )
                     v_html.write(
                         "<img src=\"" +
@@ -285,7 +288,8 @@ class CycleGAN:
                 '&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp ' \
                 '&nbsp &nbsp &nbsp &nbsp &nbsp'
         with open(os.path.join(self._output_dir, 'results_' + str(epoch) + '.html'), 'w') as v_html:
-            v_html.write("<b>INPUT" + space + "MASK" + space + "MASKED_IMAGE" + space + "GENERATED_IMAGE</b>")
+            v_html.write("<b>INPUT" + space + "MASK" + space +
+                         "MASKED_IMAGE" + space + "GENERATED_IMAGE</b>")
             v_html.write("<br>")
             for i in range(0, self._num_imgs_to_save):
                 print("Saving image {}/{}".format(i, self._num_imgs_to_save))
@@ -313,7 +317,8 @@ class CycleGAN:
                     else:
 
                         imsave(os.path.join(self._images_dir, image_name),
-                               ((np.squeeze(tensor[0]) + 1) * 127.5).astype(np.uint8)
+                               ((np.squeeze(tensor[0]) + 1)
+                                * 127.5).astype(np.uint8)
                                )
 
                     v_html.write(
@@ -409,7 +414,6 @@ class CycleGAN:
                     to_train_A = self.g_A_trainer_bis
                     to_train_B = self.g_B_trainer_bis
 
-
                 self.save_images(sess, epoch, curr_tr)
 
                 for i in range(0, max_images):
@@ -417,7 +421,7 @@ class CycleGAN:
 
                     inputs = sess.run(self.inputs)
                     # Optimizing the G_A network
-                    _, fake_B_temp, smask_a,summary_str = sess.run(
+                    _, fake_B_temp, smask_a, summary_str = sess.run(
                         [to_train_A,
                          self.fake_images_b,
                          self.masks[0],
@@ -438,7 +442,7 @@ class CycleGAN:
                         self.num_fake_inputs, fake_B_temp, smask_a, self.fake_images_B)
 
                     # Optimizing the D_B network
-                    _,summary_str = sess.run(
+                    _, summary_str = sess.run(
                         [self.d_B_trainer, self.d_B_loss_summ],
                         feed_dict={
                             self.input_a:
@@ -453,7 +457,6 @@ class CycleGAN:
                         }
                     )
                     writer.add_summary(summary_str, epoch * max_images + i)
-
 
                     # Optimizing the G_B network
                     _, fake_A_temp, smask_b, summary_str = sess.run(
@@ -474,11 +477,11 @@ class CycleGAN:
                     writer.add_summary(summary_str, epoch * max_images + i)
 
                     fake_A_temp1 = self.fake_image_pool(
-                        self.num_fake_inputs, fake_A_temp, smask_b ,self.fake_images_A)
+                        self.num_fake_inputs, fake_A_temp, smask_b, self.fake_images_A)
 
                     # Optimizing the D_A network
-                    _, mask_tmp__,summary_str = sess.run(
-                        [self.d_A_trainer,self.masks_, self.d_A_loss_summ],
+                    _, mask_tmp__, summary_str = sess.run(
+                        [self.d_A_trainer, self.masks_, self.d_A_loss_summ],
                         feed_dict={
                             self.input_a:
                                 inputs['images_i'],
@@ -535,15 +538,18 @@ def parse_args():
     desc = "Tensorflow implementation of cycleGan using attention"
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('--to_train', type=int, default=True, help='Whether it is train or false.')
+    parser.add_argument('--to_train', type=int, default=True,
+                        help='Whether it is train or false.')
     parser.add_argument('--log_dir',
-              type=str,
-              default=None,
-              help='Where the data is logged to.')
+                        type=str,
+                        default=None,
+                        help='Where the data is logged to.')
 
-    parser.add_argument('--config_filename', type=str, default='train', help='The name of the configuration file.')
+    parser.add_argument('--config_filename', type=str,
+                        default='train', help='The name of the configuration file.')
 
-    parser.add_argument('--checkpoint_dir', type=str, default='', help='The name of the train/test split.')
+    parser.add_argument('--checkpoint_dir', type=str,
+                        default='', help='The name of the train/test split.')
     parser.add_argument('--skip', type=bool, default=False,
                         help='Whether to add skip connection between input and output.')
     parser.add_argument('--switch', type=int, default=30,
@@ -551,8 +557,8 @@ def parse_args():
     parser.add_argument('--threshold', type=float, default=0.1,
                         help='The threshold value to select the FG')
 
-
     return parser.parse_args()
+
 
 def main():
     """
@@ -584,8 +590,6 @@ def main():
 
     with open(config_filename) as config_file:
         config = json.load(config_file)
-
-
 
     lambda_a = float(config['_LAMBDA_A']) if '_LAMBDA_A' in config else 10.0
     lambda_b = float(config['_LAMBDA_B']) if '_LAMBDA_B' in config else 10.0
