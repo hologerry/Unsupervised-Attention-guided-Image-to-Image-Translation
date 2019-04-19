@@ -46,7 +46,7 @@ Top row in the figure below are input images and bottom row are the mappings pro
 		}
 
 		PATH_TO_CSV = {
-		  'horse2zebra_train': './AGGAN/input/horse2zebra/horse2zebra_train.csv'
+		  'horse2zebra_train': './input/horse2zebra/horse2zebra_train.csv'
 		}
 
 		DATASET_TO_IMAGETYPE = {

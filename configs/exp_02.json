@@ -1,5 +1,5 @@
 {
-  "description": "The official PyTorch version of CycleGAN.", 
+  "description": "The official PyTorch version of CycleGAN.",
   "pool_size": 50,
   "base_lr":0.0001,
   "max_step": 100,
