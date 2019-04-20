@@ -58,16 +58,16 @@ def create_dataset(image_path_a, image_path_b,
 
     output_path = cyclegan_datasets.PATH_TO_CSV[dataset_name]
 
-    num_rows = cyclegan_datasets.DATASET_TO_SIZES[dataset_name]
+    num_rows = len(list_b)
     all_data_tuples = []
     for i in range(num_rows):
-        b_file_name = list_b[i % len(list_b)].split('/')[-1].split('.')[0]
+        b_file_name = list_b[i].split('/')[-1].split('.')[0]
         a_glob_dirs = os.path.join(image_path_a, b_file_name, "*.jpg")
         a_files = glob.glob(a_glob_dirs)
         for a_file in a_files:
             all_data_tuples.append((
                 a_file,
-                list_b[i % len(list_b)]
+                list_b[i]
             ))
     if do_shuffle is True:
         random.shuffle(all_data_tuples)
