@@ -37,7 +37,7 @@ class CycleGAN:
         self._output_dir = os.path.join(output_root_dir, current_time +
                                         '_switch'+str(switch)+'_thres_'+str(threshold_fg))
         self._images_dir = os.path.join(self._output_dir, 'imgs')
-        self._num_imgs_to_save = 20
+        self._num_imgs_to_save = 100
         self._to_restore = to_restore
         self._base_lr = base_lr
         self._max_step = max_step
@@ -273,7 +273,7 @@ class CycleGAN:
 
     def save_images_bis(self, sess, epoch):
         """
-        Saves input and output images.
+        Saves input and output images. for test()
 
         :param sess: The session.
         :param epoch: Currnt epoch.
@@ -392,7 +392,6 @@ class CycleGAN:
 
             # Training Loop
             for epoch in range(sess.run(self.global_step), self._max_step):
-                print("In the epoch ", epoch)
                 saver.save(sess, os.path.join(
                     self._output_dir, "AGGAN"), global_step=epoch)
 
@@ -417,7 +416,8 @@ class CycleGAN:
                 self.save_images(sess, epoch, curr_tr)
 
                 for i in range(0, max_images):
-                    print("Processing batch {}/{}".format(i, max_images))
+                    if i % 100 == 0:
+                        print(f"Epoch: {epoch}/{self._max_step}, batch: {i}/{max_images}")
 
                     inputs = sess.run(self.inputs)
                     # Optimizing the G_A network
