@@ -12,7 +12,7 @@ DATASET_TO_SIZES = {
     # 'summer2winter_yosemite_train': 1231,
     # 'summer2winter_yosemite_test': 309,
     'text2notext_train': 2303,
-    'text2notext_unpair_train': 2303,
+    'text2notext_unpair_train': 2083,
 }
 
 """The image types of each dataset. Currently only supports .jpg or .png"""
